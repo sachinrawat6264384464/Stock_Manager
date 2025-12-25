@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode: Standard Blue */
+    --color-primary-50: 239 246 255;
+    /* blue-50 */
+    --color-primary-100: 219 234 254;
+    /* blue-100 */
+    --color-primary-200: 191 219 254;
+    /* blue-200 */
+    --color-primary-300: 147 197 253;
+    /* blue-300 */
+    --color-primary-400: 96 165 250;
+    /* blue-400 */
+    --color-primary-500: 59 130 246;
+    /* blue-500 */
+    --color-primary-600: 37 99 235;
+    /* blue-600 (Main) */
+    --color-primary-700: 29 78 216;
+    /* blue-700 */
+    --color-primary-800: 30 64 175;
+    /* blue-800 */
+    --color-primary-900: 30 58 138;
+    /* blue-900 */
+    --color-primary-950: 23 37 84;
+    /* blue-950 */
+  }
+
+  .dark {
+    /* Dark Mode: Vibrant Orange */
+    --color-primary-50: 255 247 237;
+    /* orange-50 */
+    --color-primary-100: 255 237 213;
+    /* orange-100 */
+    --color-primary-200: 254 215 170;
+    /* orange-200 */
+    --color-primary-300: 253 186 116;
+    /* orange-300 */
+    --color-primary-400: 251 146 60;
+    /* orange-400 */
+    --color-primary-500: 249 115 22;
+    /* orange-500 */
+    --color-primary-600: 234 88 12;
+    /* orange-600 (Main) */
+    --color-primary-700: 194 65 12;
+    /* orange-700 */
+    --color-primary-800: 154 52 18;
+    /* orange-800 */
+    --color-primary-900: 124 45 18;
+    /* orange-900 */
+    --color-primary-950: 67 20 7;
+    /* orange-950 */
+
+    /* Global Text/Bg Overrides for Dark Mode */
+    body {
+      background-color: #0f172a;
+      /* slate-900 */
+      color: #f8fafc;
+      /* slate-50 */
+    }
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 transition-colors duration-300;
+  }
+}
