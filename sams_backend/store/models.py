@@ -13,7 +13,7 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     school = models.CharField(max_length=200)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) # Moving to ProductSize
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -23,6 +23,7 @@ class Product(models.Model):
 class ProductSize(models.Model):
     product = models.ForeignKey(Product, related_name='sizes', on_delete=models.CASCADE)
     size = models.CharField(max_length=20)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     quantity = models.PositiveIntegerField(default=0)
     low_stock_threshold = models.PositiveIntegerField(default=5)
 

@@ -97,6 +97,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def add_size(self, request, pk=None):
         product = self.get_object()
         size = request.data.get('size')
+        price = request.data.get('price', 0)
         quantity = request.data.get('quantity', 0)
         low_stock_threshold = request.data.get('low_stock_threshold', 5)
         
@@ -109,6 +110,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 return Response({"error": "Size already exists"}, status=status.HTTP_400_BAD_REQUEST)
             
             product_size.quantity = quantity
+            product_size.price = price
             product_size.low_stock_threshold = low_stock_threshold
             product_size.save()
             
@@ -189,7 +191,7 @@ class BillViewSet(viewsets.ModelViewSet):
                     product_size.quantity -= qty
                     product_size.save()
                     
-                    price = product_size.product.price
+                    price = product_size.price
                     subtotal = price * qty
                     total_amount += subtotal
                     

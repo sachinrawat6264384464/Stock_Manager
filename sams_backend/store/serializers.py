@@ -4,7 +4,7 @@ from .models import Product, ProductSize, StockIn, Bill, BillItem, Activity
 class ProductSizeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductSize
-        fields = ['id', 'size', 'quantity', 'low_stock_threshold']
+        fields = ['id', 'size', 'price', 'quantity', 'low_stock_threshold']
 
 class ProductSerializer(serializers.ModelSerializer):
     sizes = ProductSizeSerializer(many=True, read_only=True)

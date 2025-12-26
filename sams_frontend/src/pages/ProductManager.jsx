@@ -15,8 +15,8 @@ const ProductManager = () => {
     const [categoryFilter, setCategoryFilter] = useState('ALL');
 
     // Form States
-    const [newProduct, setNewProduct] = useState({ name: '', school: '', category: 'Blazer', price: '', size: '', quantity: '', low_stock_threshold: 5 });
-    const [newSize, setNewSize] = useState({ size: '', quantity: 0, low_stock_threshold: 5 });
+    const [newProduct, setNewProduct] = useState({ name: '', school: '', category: 'Blazer' });
+    const [newSize, setNewSize] = useState({ size: '', price: 0, quantity: 0, low_stock_threshold: 5 });
 
     useEffect(() => {
         fetchProducts();
@@ -62,25 +62,15 @@ const ProductManager = () => {
     const handleAddProduct = async (e) => {
         e.preventDefault();
         try {
-            // 1. Create Product
-            const productRes = await api.post('products/', {
+            // Create Product
+            await api.post('products/', {
                 name: newProduct.name,
                 school: newProduct.school,
-                category: newProduct.category,
-                price: newProduct.price
+                category: newProduct.category
             });
 
-            // 2. Add Size if provided
-            if (newProduct.size && productRes.data.id) {
-                await api.post(`products/${productRes.data.id}/add_size/`, {
-                    size: newProduct.size,
-                    quantity: newProduct.quantity || 0,
-                    low_stock_threshold: newProduct.low_stock_threshold || 5
-                });
-            }
-
             setShowAddModal(false);
-            setNewProduct({ name: '', school: '', category: 'Blazer', price: '', size: '', quantity: '', low_stock_threshold: 5 });
+            setNewProduct({ name: '', school: '', category: 'Blazer' });
             fetchProducts();
         } catch (error) {
             console.error(error);
@@ -94,7 +84,7 @@ const ProductManager = () => {
         try {
             await api.post(`products/${selectedProductForSize.id}/add_size/`, newSize);
             setShowSizeModal(false);
-            setNewSize({ size: '', quantity: 0, low_stock_threshold: 5 });
+            setNewSize({ size: '', price: 0, quantity: 0, low_stock_threshold: 5 });
             fetchProducts();
         } catch (error) {
             alert('Error adding size');
@@ -163,7 +153,6 @@ const ProductManager = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <span className="font-bold text-slate-700 dark:text-slate-200">₹{product.price}</span>
                                         <button
                                             onClick={(e) => handleDeleteProduct(e, product.id)}
                                             className="p-2 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
@@ -194,6 +183,7 @@ const ProductManager = () => {
                                             {product.sizes.map((size) => (
                                                 <div key={size.id} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-600 text-center shadow-sm">
                                                     <div className="font-bold text-slate-800 dark:text-white text-lg">{size.size}</div>
+                                                    <div className="text-sm font-bold text-blue-600 dark:text-orange-400">₹{size.price}</div>
                                                     <div className={`text-xs font-bold mt-1 ${size.quantity <= (size.low_stock_threshold || 5) ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
                                                         Qty: {size.quantity}
                                                     </div>
@@ -246,31 +236,6 @@ const ProductManager = () => {
                                 <option value="Skirt">Skirt</option>
                                 <option value="Other">Other</option>
                             </select>
-                            <input
-                                type="number" className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500" placeholder="Price"
-                                value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} required
-                            />
-
-                            <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
-                                <h4 className="font-bold text-sm text-slate-600 dark:text-slate-300 mb-3">Initial Size (Optional)</h4>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <input
-                                        className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500" placeholder="Size" list="size-suggestions"
-                                        value={newProduct.size} onChange={e => setNewProduct({ ...newProduct, size: e.target.value })}
-                                    />
-                                    <datalist id="size-suggestions">
-                                        {sizeOptions.map(size => <option key={size} value={size} />)}
-                                    </datalist>
-                                    <input
-                                        type="number" className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500" placeholder="Qty"
-                                        value={newProduct.quantity} onChange={e => setNewProduct({ ...newProduct, quantity: e.target.value })}
-                                    />
-                                    <input
-                                        type="number" className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500" placeholder="Alert Limit"
-                                        value={newProduct.low_stock_threshold} onChange={e => setNewProduct({ ...newProduct, low_stock_threshold: e.target.value })}
-                                    />
-                                </div>
-                            </div>
                             <div className="flex gap-3 mt-6">
                                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 p-3 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
                                 <button type="submit" className="flex-1 p-3 bg-blue-600 dark:bg-orange-600 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-orange-700 transition-colors">Add Product</button>
@@ -286,10 +251,16 @@ const ProductManager = () => {
                     <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl transition-colors">
                         <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Add Size for {selectedProductForSize?.name}</h3>
                         <form onSubmit={handleAddSize} className="space-y-4">
-                            <input
-                                className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500" placeholder="Size (e.g. 28, S, M)" list="size-suggestions"
-                                value={newSize.size} onChange={e => setNewSize({ ...newSize, size: e.target.value })} required
-                            />
+                            <div className="grid grid-cols-2 gap-3">
+                                <input
+                                    className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500" placeholder="Size (e.g. 28, S, M)" list="size-suggestions"
+                                    value={newSize.size} onChange={e => setNewSize({ ...newSize, size: e.target.value })} required
+                                />
+                                <input
+                                    type="number" className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500" placeholder="Price"
+                                    value={newSize.price} onChange={e => setNewSize({ ...newSize, price: e.target.value })} required
+                                />
+                            </div>
                             <div className="flex gap-3">
                                 <div className="flex-1">
                                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Initial Qty</label>

@@ -85,8 +85,8 @@ const BillingInterface = ({ isModal = false, onClose, formOnly = false }) => {
             product_size_id: sizeObj.id,
             size: sizeObj.size,
             quantity: parseInt(quantity),
-            price: parseFloat(product.price),
-            total: parseFloat(product.price) * parseInt(quantity)
+            price: parseFloat(sizeObj.price),
+            total: parseFloat(sizeObj.price) * parseInt(quantity)
         };
 
         setCart([...cart, item]);
@@ -126,10 +126,16 @@ const BillingInterface = ({ isModal = false, onClose, formOnly = false }) => {
             // Send SMS message
             if (customerPhone) {
                 const message = `Hello ${customerName || 'Customer'},\nYour bill ${billData.bill_number} for ₹${billData.total_amount} has been generated successfully at SAMS VISNOI STORE.\nThank you for shopping!`;
-                // Use sms: protocol. Note: Android uses ?body=, iOS uses &body=
-                // But for most modern cases, ?body= works or simply opens the app.
-                const smsUrl = `sms:${customerPhone.replace(/[\s+-]/g, '')}?body=${encodeURIComponent(message)}`;
-                window.location.href = smsUrl;
+
+                // Detect device to use correct body separator (? for Android/Desktop, ; or & for iOS)
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const separator = isIOS ? '&' : '?';
+
+                const cleanPhone = customerPhone.replace(/[\s-]/g, ''); // Keep + if present
+                const smsUrl = `sms:${cleanPhone}${separator}body=${encodeURIComponent(message)}`;
+
+                // Try to open in a way that doesn't navigate the current window away
+                window.open(smsUrl, '_blank');
             }
         } catch (error) {
             setMessage('Failed to create bill. ' + (error.response?.data?.error || ''));
