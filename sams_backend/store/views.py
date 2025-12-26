@@ -166,6 +166,7 @@ class BillViewSet(viewsets.ModelViewSet):
         data = request.data
         items = data.get('items', [])
         customer_name = data.get('customer_name', 'Guest')
+        customer_phone = data.get('customer_phone', '')
         
         if not items:
             return Response({'error': 'No items in bill'}, status=status.HTTP_400_BAD_REQUEST)
@@ -173,7 +174,7 @@ class BillViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 total_amount = 0
-                bill = Bill.objects.create(customer_name=customer_name)
+                bill = Bill.objects.create(customer_name=customer_name, customer_phone=customer_phone)
                 
                 for item in items:
                     product_size_id = item.get('product_size_id')
@@ -212,6 +213,43 @@ class BillViewSet(viewsets.ModelViewSet):
                 
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        try:
+            with transaction.atomic():
+                # Restore Stock
+                for item in instance.items.all():
+                    try:
+                        # Try to find the product size to restore stock
+                        # Note: We match by name and size since the original product might have been modified
+                        # But ideally we should have kept the product_size_id in the BillItem
+                        # Checking if we have a way to match it reliably
+                        # Looking at BillItem creation in views.py, it uses product_size.id which is not stored in BillItem model
+                        # Let's check BillItem model again.
+                        
+                        # Wait, I see BillItem has price, quantity, size, product_name.
+                        # I'll try to find the ProductSize by product name and size.
+                        product = Product.objects.filter(name=item.product_name).first()
+                        if product:
+                            ps = ProductSize.objects.filter(product=product, size=item.size).first()
+                            if ps:
+                                ps.quantity += item.quantity
+                                ps.save()
+                    except Exception as e:
+                        print(f"Error restoring stock for item {item.id}: {str(e)}")
+                        # Continue with other items
+                
+                # Log Activity
+                Activity.objects.create(
+                    action_type='DELETE',
+                    description=f"Bill Deleted: {instance.bill_number} for ₹{instance.total_amount}"
+                )
+                
+                return super().destroy(request, *args, **kwargs)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

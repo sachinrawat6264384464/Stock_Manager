@@ -8,6 +8,7 @@ const BillingInterface = ({ isModal = false, onClose, formOnly = false }) => {
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
 
     // Selection State
     const [selectedProduct, setSelectedProduct] = useState('');
@@ -110,14 +111,26 @@ const BillingInterface = ({ isModal = false, onClose, formOnly = false }) => {
         try {
             const payload = {
                 customer_name: customerName,
+                customer_phone: customerPhone,
                 items: cart
             };
             const res = await api.post('bills/', payload);
-            setLastBill(res.data);
+            const billData = res.data;
+            setLastBill(billData);
             setCart([]);
             setCustomerName('');
+            setCustomerPhone('');
             fetchProducts(); // Refresh stock
             setMessage('Bill created successfully!');
+
+            // Send SMS message
+            if (customerPhone) {
+                const message = `Hello ${customerName || 'Customer'},\nYour bill ${billData.bill_number} for ₹${billData.total_amount} has been generated successfully at SAMS VISNOI STORE.\nThank you for shopping!`;
+                // Use sms: protocol. Note: Android uses ?body=, iOS uses &body=
+                // But for most modern cases, ?body= works or simply opens the app.
+                const smsUrl = `sms:${customerPhone.replace(/[\s+-]/g, '')}?body=${encodeURIComponent(message)}`;
+                window.location.href = smsUrl;
+            }
         } catch (error) {
             setMessage('Failed to create bill. ' + (error.response?.data?.error || ''));
         }
@@ -412,6 +425,14 @@ const BillingInterface = ({ isModal = false, onClose, formOnly = false }) => {
                                         value={customerName}
                                         onChange={e => setCustomerName(e.target.value)}
                                     />
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Customer Phone (Optional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter phone number (e.g. 91xxxxxxxxxx)"
+                                        className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500 mb-4"
+                                        value={customerPhone}
+                                        onChange={e => setCustomerPhone(e.target.value)}
+                                    />
                                     <div className="mb-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                                         <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Items in Cart: <span className="font-bold">{cart.length}</span></p>
                                         <p className="text-lg font-bold text-slate-900 dark:text-white">Total: ₹{calculateTotal()}</p>
@@ -530,6 +551,13 @@ const BillingInterface = ({ isModal = false, onClose, formOnly = false }) => {
                             className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500"
                             value={customerName}
                             onChange={e => setCustomerName(e.target.value)}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Phone Number (Optional)"
+                            className="w-full p-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500 mt-3"
+                            value={customerPhone}
+                            onChange={e => setCustomerPhone(e.target.value)}
                         />
                     </div>
 

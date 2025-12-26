@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { Package, TrendingUp, AlertTriangle, Activity, Plus, Save, X, FileText } from 'lucide-react';
+import { Package, TrendingUp, AlertTriangle, Activity, Plus, Save, X, FileText, Trash2 } from 'lucide-react';
 
 import InvoiceModal from '../components/InvoiceModal';
 import LowStockModal from '../components/LowStockModal';
@@ -14,7 +14,6 @@ const Dashboard = () => {
     const [selectedBill, setSelectedBill] = useState(null);
     const [showLowStock, setShowLowStock] = useState(false);
     const [showBillingModal, setShowBillingModal] = useState(false);
-    const [showAddBillModal, setShowAddBillModal] = useState(false);
 
     // Inline Stock In State
     const [refillQty, setRefillQty] = useState({});
@@ -89,11 +88,24 @@ const Dashboard = () => {
         }
     };
 
+    const handleDeleteBill = async (billId, e) => {
+        e.stopPropagation(); // Prevent opening the invoice modal
+        if (!window.confirm("Are you sure you want to delete this bill? This will restore the stock for all items in the bill.")) return;
+
+        try {
+            await api.delete(`bills/${billId}/`);
+            fetchStats(); // Refresh dashboard data
+        } catch (error) {
+            console.error("Delete bill error:", error);
+            alert('Failed to delete bill: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
     if (loading) return <div className="flex justify-center p-20">Loading...</div>;
 
     return (
         <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {/* Total Stock Card */}
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-orange-500 dark:to-orange-600 p-6 rounded-2xl shadow-lg shadow-blue-500/20 dark:shadow-orange-500/20 text-white flex items-center gap-4 transform transition-all hover:scale-105 duration-300">
                     <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
@@ -141,19 +153,6 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Add Bill Form Card */}
-                <div
-                    onClick={() => setShowAddBillModal(true)}
-                    className="bg-gradient-to-br from-teal-500 to-cyan-600 cursor-pointer p-6 rounded-2xl shadow-lg shadow-teal-500/20 text-white flex items-center gap-4 transform transition-all hover:scale-105 duration-300"
-                >
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                        <Plus size={28} className="text-white" />
-                    </div>
-                    <div>
-                        <p className="text-teal-100 font-medium">Add Bill</p>
-                        <h3 className="text-xl font-bold">Form Only</h3>
-                    </div>
-                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -237,9 +236,18 @@ const Dashboard = () => {
                                         <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{bill.customer_name || 'Guest'}</p>
                                         <p className="text-xs text-slate-400 mt-1">{bill.bill_number}</p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-slate-900 dark:text-white">₹{bill.total_amount}</p>
-                                        <p className="text-xs text-slate-400 mt-1">{new Date(bill.date).toLocaleDateString()}</p>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <p className="font-bold text-slate-900 dark:text-white">₹{bill.total_amount}</p>
+                                            <p className="text-xs text-slate-400 mt-1">{new Date(bill.date).toLocaleDateString()}</p>
+                                        </div>
+                                        <button
+                                            onClick={(e) => handleDeleteBill(bill.id, e)}
+                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            title="Delete Bill"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -277,22 +285,6 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* Add Bill Form Modal - formOnly mode */}
-            {showAddBillModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200">
-                        <button
-                            onClick={() => setShowAddBillModal(false)}
-                            className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 transition-colors z-10"
-                        >
-                            <X size={24} />
-                        </button>
-                        <div className="p-6 h-full overflow-y-auto">
-                            <BillingInterface isModal={true} formOnly={true} onClose={() => setShowAddBillModal(false)} />
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 };
